@@ -8,38 +8,40 @@ const io = socketIO(server);
 
 let localClientSocket = null;
 
-// Проверка жизни
+// Для аптайм проверки
 app.get('/ping', (req, res) => {
   res.send('I am alive!');
 });
 
-// Основной эндпоинт
+// Основной эндпоинт — проксирует запрос на клиент
 app.get('/', (req, res) => {
   if (!localClientSocket) {
     return res.status(503).send('Local PC is offline.');
   }
 
-  // Отправляем запрос в клиент
+  // Отправляем запрос клиенту
   localClientSocket.emit('request', req.headers, (response) => {
     res.send(response);
   });
 });
 
+// Подключение клиента через Socket.IO
 io.on('connection', (socket) => {
-  console.log('Client connected');
+  console.log('🔌 Клиент подключён:', socket.id);
   localClientSocket = socket;
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected');
+    console.log('🚫 Клиент отключён:', socket.id);
     localClientSocket = null;
   });
 
   socket.on('response', (data) => {
-    console.log('Response from client:', data.slice(0, 50) + '...');
+    console.log('⬅️ Получен ответ от клиента:', data.slice(0, 50) + '...');
   });
 });
 
+// Запуск сервера
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Render server running on port ${PORT}`);
+  console.log(`🟢 Сервер запущен на порту ${PORT}`);
 });
